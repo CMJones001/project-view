@@ -8,8 +8,10 @@
 use glob::glob;
 use std::path;
 
+/// Return a list of files matching a simple regex, typically matching some sort
+/// of data file. This will be extended to split the glob pattern into a short
+/// wildcard and a path to a directory of interest.
 pub fn list_files(glob_pattern: &String) -> Option<Vec<path::PathBuf>>{
-    /// Return a list of files
     let mut file_list = Vec::new();
 
     // Load the paths into a vector
@@ -28,11 +30,28 @@ pub fn list_files(glob_pattern: &String) -> Option<Vec<path::PathBuf>>{
 #[cfg(test)]
 mod tests {
     use super::*;
+    /// Return a path to a set of example data directories within the tests
+    /// directory.
+    fn get_mock_dir() -> path::PathBuf {
+        // Give relative to this source code file
+        let mut test_project_dirs = path::PathBuf::from(file!());
 
+        // Get the full path, remove up to project root and decend down into the
+        // tests dir.
+        test_project_dirs = test_project_dirs.canonicalize().unwrap();
+        test_project_dirs.pop();
+        test_project_dirs.pop();
+        test_project_dirs.push("tests/testDirs");
+
+        test_project_dirs
+    }
+
+    // Test that we get the correct mock directory by looking for a given folder.
     #[test]
-    fn this_test_will_pass() {
-        let test_dir = "../tests/testDirs/**/*.txt";
+    fn test_get_mock_dir() {
+        let test_dir = get_mock_dir();
+        let sub_dir = test_dir.join(path::Path::new("first_dir"));
 
-        assert_eq!(expected_value, value);
+        assert!(sub_dir.exists());
     }
 }
