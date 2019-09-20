@@ -11,11 +11,14 @@ use std::path;
 /// Return a list of files matching a simple regex, typically matching some sort
 /// of data file. This will be extended to split the glob pattern into a short
 /// wildcard and a path to a directory of interest.
-pub fn list_files(glob_pattern: &String) -> Option<Vec<path::PathBuf>>{
+pub fn list_files_in_dir(dir_path: path::PathBuf, glob_pattern: &String)
+                         -> Option<Vec<path::PathBuf>>{
     let mut file_list = Vec::new();
 
     // Load the paths into a vector
-    for entry in glob(glob_pattern).expect("Failed to read glob pattern") {
+    let regex_path = dir_path.join(glob_pattern);
+
+    for entry in glob(regex_path.to_str().unwrap()).expect("Failed to read glob pattern") {
         file_list.push(entry.unwrap());
     }
 
@@ -53,5 +56,32 @@ mod tests {
         let sub_dir = test_dir.join(path::Path::new("first_dir"));
 
         assert!(sub_dir.exists());
+    }
+
+    // Tests that the file only returns the expected extension
+    #[test]
+    fn regex_search_correct_extension() {
+        let test_dir = get_mock_dir();
+        let test_extension = String::from("**/*.csv");
+
+        let actual_paths = list_files_in_dir(test_dir, &test_extension)
+            .expect("No files matched");
+
+        for p in actual_paths {
+            assert_eq!("csv", p.extension().unwrap())
+        }
+    }
+
+    // Ensure that we match the expected number of files
+    #[test]
+    fn regex_search_correct_count() {
+        let test_dir = get_mock_dir();
+        let test_extension = String::from("**/*.csv");
+
+        let actual_paths = list_files_in_dir(test_dir, &test_extension)
+            .expect("No files matched");
+
+        assert_eq!(3, actual_paths.len());
+
     }
 }

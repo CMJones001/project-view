@@ -1,14 +1,15 @@
 mod file_status;
-use std::process;
+use std::{process,path};
 
 fn main() {
-    println!("Hello, world!");
-    let glob_pattern = String::from("../tests/testDirs/**/*.cfg");
+    let dir_path = path::PathBuf::from("tests/testDirs");
+    let glob_pattern = String::from("**/*.csv");
 
     // Search for files matching the glob pattern, quit with error otherwise.
-    let file_list = file_status::list_files(&glob_pattern).unwrap_or_else(|| {
-        println!("No files found");
-        process::exit(1);
+    let file_list = file_status::list_files_in_dir(dir_path, &glob_pattern)
+        .unwrap_or_else(|| {
+            println!("No files found");
+            process::exit(1);
     });
 
     // Print the first file
