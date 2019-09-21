@@ -3,9 +3,14 @@
 /// This module serves two main roles, locating the experimental data files,
 /// typically within some sort of complex folder structure and returning
 /// information about these files, such as the last modified time.
+extern crate chrono;
 
 use glob::glob;
 use std::path::{PathBuf,Path};
+use std::{fs,time};
+use chrono::{format,Utc};
+use chrono::Datelike;
+
 
 /// Return a list of files matching a simple regex in a given directory,
 /// typically matching some sort of data file. We only return paths to actual
@@ -55,6 +60,34 @@ fn get_unique_parent_dirs(file_list: Vec<PathBuf>) -> Option<Vec<PathBuf>> {
 
     Some(parent_dirs)
 }
+
+/// Container for each experiment file, this should contain a list to a valid
+/// file and useful metadata of the file.
+pub struct ExperimentFile {
+    path: PathBuf,
+    modified: chrono::DateTime::<Utc>,
+}
+
+impl ExperimentFile {
+    // Create the object by providing a file name
+    pub fn new(path: PathBuf) -> ExperimentFile {
+        if !path.is_file() {
+            panic!("ExperimentFile has been provided path to non-existent file");
+        }
+
+        // Calculate the last modified time
+        let metadata = path.metadata().expect("failed to get metadata");
+        let modified_system = metadata.modified().expect("Unable to get file creation time");
+
+        let modified = chrono::DateTime::<Utc>::from(modified_system);
+
+
+        ExperimentFile{ path: path, modified: modified}
+    }
+
+    // Add an ordering to the struct
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -124,5 +157,19 @@ mod tests {
             println!("{}", file_.display());
         }
         assert_eq!(3, actual_parent_dirs.len());
+    }
+
+    // Test that we get the creation time of the file with ExperimentFile
+    #[test]
+    fn get_creation_time() {
+        let test_file = get_mock_dir().join("first_dir/data.txt");
+
+        let time_format = "%F";
+        let experiment_file = ExperimentFile::new(test_file);
+        let modified_time = experiment_file.modified;
+
+        assert_eq!(modified_time.year(), 2019);
+        assert_eq!(modified_time.month(), 9);
+        assert_eq!(modified_time.day(), 19);
     }
 }
