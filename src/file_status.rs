@@ -7,8 +7,7 @@ extern crate chrono;
 
 use glob::glob;
 use std::path::{PathBuf,Path};
-use std::{fs,time};
-use chrono::{format,Utc};
+use chrono::Utc;
 use chrono::Datelike;
 
 
@@ -69,7 +68,7 @@ pub struct ExperimentFile {
 }
 
 impl ExperimentFile {
-    // Create the object by providing a file name
+    /// Create the object by providing a file name
     pub fn new(path: PathBuf) -> ExperimentFile {
         if !path.is_file() {
             panic!("ExperimentFile has been provided path to non-existent file");
@@ -78,13 +77,17 @@ impl ExperimentFile {
         // Calculate the last modified time
         let metadata = path.metadata().expect("failed to get metadata");
         let modified_system = metadata.modified().expect("Unable to get file creation time");
-
         let modified = chrono::DateTime::<Utc>::from(modified_system);
-
 
         ExperimentFile{ path: path, modified: modified}
     }
 
+    /// Return nicely formatted date time string
+    pub fn formatted_time(&self) -> std::string::String {
+        let format_string = "%F";
+        // std::string::ToString(self.modified.format(format_string))
+        self.modified.format(format_string).to_string()
+    }
     // Add an ordering to the struct
 }
 
@@ -165,12 +168,23 @@ mod tests {
     fn get_creation_time() {
         let test_file = get_mock_dir().join("first_dir/data.txt");
 
-        let time_format = "%F";
         let experiment_file = ExperimentFile::new(test_file);
         let modified_time = experiment_file.modified;
 
         assert_eq!(modified_time.year(), 2019);
         assert_eq!(modified_time.month(), 9);
         assert_eq!(modified_time.day(), 19);
+    }
+
+    // Formatting of a date into a human readable format
+    #[test]
+    fn format_date() {
+        let expected_formatted_time = "2019-09-19";
+
+        let test_file = get_mock_dir().join("first_dir/data.txt");
+        let experiment_file = ExperimentFile::new(test_file);
+        let actual_formatted_time = experiment_file.formatted_time();
+
+        assert_eq!(actual_formatted_time, expected_formatted_time)
     }
 }
