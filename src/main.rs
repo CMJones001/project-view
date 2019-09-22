@@ -1,4 +1,5 @@
 mod file_status;
+mod git_commits;
 use std::{process,path};
 
 fn main() {
