@@ -9,10 +9,10 @@ use std::process::Command;
 use std::str;
 
 pub struct CommitInformation {
-    hash: String,
-    date: chrono::DateTime::<Utc>,
-    subject: String,
-    commits_after: i32,
+    pub hash: String,
+    pub date: chrono::DateTime::<Utc>,
+    pub subject: String,
+    pub commits_after: i32,
 }
 
 impl CommitInformation {
@@ -39,23 +39,24 @@ impl CommitInformation {
             debug!("git part {} - {}", num, part);
         }
 
-        CommitInformation{
-            hash:"thou".to_string(),
-            date:date,
-            subject:"Test".to_string(),
-            commits_after:5
-        }
+        // Get the commit time with the correct time zone
+        let commit_time = chrono::DateTime::parse_from_rfc3339(git_parts[1])
+            .expect("Unable to parse git time stamp");
+        debug!("Formatted commit time {}", commit_time.format("%F %T"));
 
+        CommitInformation{
+            hash:git_parts[0].to_string(),
+            date:chrono::DateTime::<Utc>::from(commit_time),
+            subject:git_parts[2].to_string(),
+            commits_after:CommitInformation::get_number_of_commits_behind(),
+        }
     }
 
-    // pub fn get_number_of_commits_behind() {
-    // }
-
-    // /// A more generalised form of the difference between the commit and data
-    // /// files. This may included the number of major or minor revisions.
-
-    // pub fn distance() {
-    // }
+    /// A more generalised form of the difference between the commit and data
+    /// files. This may included the number of major or minor revisions.
+    pub fn get_number_of_commits_behind() -> i32 {
+        0
+    }
 }
 
 /// Get the stdout from a function and convert this byte string into a utf8
