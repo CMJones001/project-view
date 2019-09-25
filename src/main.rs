@@ -2,6 +2,7 @@
 extern crate log;
 extern crate env_logger;
 extern crate chrono;
+
 mod file_status;
 mod git_commits;
 use std::{process,path};

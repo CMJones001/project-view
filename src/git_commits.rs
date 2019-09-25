@@ -34,8 +34,8 @@ impl CommitInformation {
             .output()
             .expect("Failed to execute git rev call");
 
-        let git_string = try_capture_output_as_string(&git_rev_call)
-            .expect("No stdout on git rev-list");
+        let git_string = capture_output_as_string(&git_rev_call)
+            .expect_stdout("Failed shell command to get git commits before given date.");
 
         // Format the git string into Vector<str>, breaking on new lines
         let git_parts = split_git_info_string(&git_string);
@@ -73,8 +73,8 @@ fn get_number_of_commits_behind(
         .output()
         .expect("Call to get rev-list failed.");
 
-    let git_string = try_capture_output_as_string(&git_rev_call)
-        .expect("No stdout for git rev-list");
+    let git_string = capture_output_as_string(&git_rev_call)
+        .expect_stdout("Failed to get all commits after a given date.");
 
     // Each line in a new commit -> count the number of lines.
     let num_commits = git_string.split_terminator("\n").count();
@@ -82,23 +82,59 @@ fn get_number_of_commits_behind(
     num_commits.try_into().unwrap()
 }
 
+/// Possible values from running a shell command, stored as strings 
+enum CommandReturn {
+    Stdout(String),
+    Stderr(String),
+    None,
+}
+
+/// For now we provide methods similar to unwrap and expect, but panic if no
+/// stdout is found and prints the stderr to error logs.
+impl CommandReturn {
+    // Panic if no stdout is found
+    fn unwrap_stdout(&self) -> String {
+        match &self {
+            CommandReturn::Stdout(message) => message.to_string(),
+            CommandReturn::Stderr(message) => {
+                error!("Command stderr:\n{}", message);
+                panic!("Only stderr received from command.");
+            }
+            CommandReturn::None => {panic!("Command returned no output")}
+        }
+    }
+
+    fn expect_stdout(&self, err_message: &str) -> String {
+        match &self {
+            CommandReturn::Stdout(message) => message.to_string(),
+            CommandReturn::Stderr(message) => {
+                error!("Command stderr:\n{}", message);
+                panic!("{}", err_message);
+            }
+            CommandReturn::None => {panic!("{}", err_message)}
+        }
+    }
+}
+
 /// Try to convert the output from a bash command into a utf-8 string.
 /// If no stdout is captured, write stderr to logs then return None.
-fn try_capture_output_as_string(process_out: &std::process::Output)
-                                -> Option<String> {
+fn capture_output_as_string(process_out: &std::process::Output)
+                                -> CommandReturn {
     let stdout_bytes = &process_out.stdout;
     let output = String::from_utf8(stdout_bytes.clone())
         .expect("Invalid byte sequence from command stdout.");
 
     if output.len() > 0 {
-        Some(output)
+        CommandReturn::Stdout(output)
     } else {
         let stderr_bytes = &process_out.stderr;
         let errout = String::from_utf8(stderr_bytes.clone())
             .expect("Invalid byte sequence from command stderr.");
-
-        error!("Command call failed with stderr:\n{}",errout);
-        None
+        if errout.len() > 0 {
+            CommandReturn::Stderr(errout)
+        } else {
+            CommandReturn::None
+        }
     }
 }
 
@@ -123,22 +159,36 @@ mod tests {
             .output()
             .expect("Failed to execute echo");
 
-        let output = try_capture_output_as_string(&echo_test)
-            .unwrap();
+        let output = capture_output_as_string(&echo_test)
+            .unwrap_stdout();
         assert_eq!(output, "test items\n")
     }
 
     // Test a shell command than only returns stderr should fail. The man
     // command will do this if no arguments are provided
     #[test]
+    #[should_panic(expected="Only stderr")]
     fn test_bad_command_call() {
         let echo_test = Command::new("man")
             .output()
             .expect("Failed to execute echo");
 
-        let output = try_capture_output_as_string(&echo_test);
+        let output = capture_output_as_string(&echo_test).unwrap_stdout();
 
-        assert_eq!(output, None)
+    }
+
+    // Test a shell command than only returns stderr should fail. The man
+    // command will do this if no arguments are provided
+    #[test]
+    #[should_panic(expected="Custom message")]
+    fn test_bad_command_call_with_message() {
+        let echo_test = Command::new("man")
+            .output()
+            .expect("Failed to execute echo");
+
+        let output = capture_output_as_string(&echo_test)
+            .expect_stdout("Custom message");
+
     }
 
     #[test]
