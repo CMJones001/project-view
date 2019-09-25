@@ -12,8 +12,9 @@ fn main() {
     let current = chrono::offset::Utc::now();
     let commit = git_commits::CommitInformation::from(current);
 
-    println!("Commit date {}", commit.date);
-    println!("Commit structure {}", commit.subject);
+    println!("Commit date:      {}", commit.date);
+    println!("Commit structure: {}", commit.subject);
+    println!("Commits behind:   {}", commit.commits_after);
 
     // // Search for files matching the glob pattern, quit with error otherwise.
     // let file_list = file_status::list_files_in_dir(dir_path, &glob_pattern)
