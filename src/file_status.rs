@@ -161,6 +161,7 @@ mod tests {
 
     // Test that we get the creation time of the file with ExperimentFile
     #[test]
+    #[ignore]
     fn get_creation_time() {
         let test_file = get_mock_dir().join("first_dir/data.txt");
 
