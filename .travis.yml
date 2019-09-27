@@ -1,0 +1,12 @@
+langauge: rust 
+rust:
+  - stable
+  - beta
+  - nightly
+
+martrix:
+  allow_failures:
+    - rust: nightly
+      fast_finish: true
+
+cache: cargo
