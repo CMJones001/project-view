@@ -1,4 +1,5 @@
-langauge: rust 
+language: rust
+
 rust:
   - stable
   - beta
@@ -7,6 +8,6 @@ rust:
 martrix:
   allow_failures:
     - rust: nightly
-      fast_finish: true
+  fast_finish: true
 
 cache: cargo
