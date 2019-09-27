@@ -1,5 +1,8 @@
 # project-view
 
+[![Build Status](https://travis-ci.org/CMJones001/project-view.svg?branch=develop)](https://travis-ci.org/CMJones001/project-view)
+
+
 ## Outline
 
 This is a basic data pipeline created as a hobby project, partly to help
@@ -31,12 +34,12 @@ analysis.
             create, then any files that are created a few hours before
             the last are likely out of date.
       - \[ \] Compare this to the source code
-          - \[ \] Get the last commit before a given time
-          - \[ \] Parse the commit information
+          - \[X\] Get the last commit before a given time
+          - \[X\] Parse the commit information
           - \[ \] Get the a measure of difference between the data
             creation and current source.
               - The exact measure is unclear
-              - \[ \] Number of commits on all branches
+              - \[X\] Number of commits on all branches
                   - While this is simplest it is perhaps not too
                     relevant as we have no idea when a breaking change
                     is introduced.
