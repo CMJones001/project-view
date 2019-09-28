@@ -1,8 +1,10 @@
-/// Manage the status of the data files.
-///
-/// This module serves two main roles, locating the experimental data files,
-/// typically within some sort of complex folder structure and returning
-/// information about these files, such as the last modified time.
+//! Manage the status of the data files.
+//!
+//! # Outline
+//!
+//! This module serves two main roles, locating the experimental data files,
+//! typically within some sort of complex folder structure and returning
+//! information about these files, such as the last modified time.
 extern crate chrono;
 
 use glob::glob;
@@ -10,9 +12,11 @@ use std::path::PathBuf;
 use chrono::Local;
 
 
-/// Return a list of files matching a simple regex in a given directory,
-/// typically matching some sort of data file. We only return paths to actual
-/// files, directories are not included.
+/// Return a list of files matching a simple regex in a given directory.
+///
+/// Each stage of the experiment analysis should be organised into the
+/// sub-directories of the main experiment directory. Therefore this function is
+/// useful to create a list of files for an experiment step.
 pub fn list_files_in_dir(dir_path: PathBuf, glob_pattern: &str)
                          -> Option<Vec<ExperimentFile>>{
     let mut file_list = Vec::new();
@@ -38,10 +42,13 @@ pub fn list_files_in_dir(dir_path: PathBuf, glob_pattern: &str)
     }
 }
 
-/// The experiment dirs are typically defined by the files they contain.
-/// Here we create a list of parent directories and then return only the unique
-/// values.
-pub fn get_unique_parent_dirs(file_list: Vec<ExperimentFile>) ->
+/// Return a list of parent directories.
+///
+/// Each main experiment directory is typically defined by a file that it
+/// contains, such as configuration file. This function returns a list of these
+/// directories so that we may create an ``Experiment`` object for each of
+/// these.
+pub fn get_unique_experiment_dirs(file_list: Vec<ExperimentFile>) ->
     Option<Vec<PathBuf>> {
     let mut parent_dirs = vec![];
     let mut parent_dir;
@@ -62,8 +69,10 @@ pub fn get_unique_parent_dirs(file_list: Vec<ExperimentFile>) ->
     Some(parent_dirs)
 }
 
-/// Container for each experiment file, this should contain a list to a valid
-/// file and useful metadata of the file.
+/// Container for each experiment file. This contains a vector of links to valid
+/// files and handles metadata related to the files.
+/// Currently this includes only the modification time of the file, but will be
+/// updated to include the git commit at the time of modification.
 pub struct ExperimentFile {
     pub path: PathBuf,
     pub modified: chrono::DateTime::<Local>,
@@ -84,7 +93,7 @@ impl ExperimentFile {
         ExperimentFile{ path: path, modified: modified}
     }
 
-    /// Return nicely formatted date time string
+    /// Return a nicely formatted date time string
     pub fn formatted_time(&self) -> std::string::String {
         let format_string = "%c";
         // std::string::ToString(self.modified.format(format_string))
@@ -108,7 +117,7 @@ mod tests {
     fn test_get_mock_dir() {
         // Create the directory and store the path
         let experiment_dir = tempfile::TempDir::new().unwrap();
-        let dir_path = &experiment_dir.path(); 
+        let dir_path = &experiment_dir.path();
 
         // Where we expect a sub directory to be created
         let expected_path = dir_path.join("first_dir");
@@ -125,7 +134,7 @@ mod tests {
     fn regex_search_correct_extension() {
         // Create the directory and store the path
         let experiment_dir = tempfile::TempDir::new().unwrap();
-        let dir_path = &experiment_dir.path(); 
+        let dir_path = &experiment_dir.path();
 
         let test_extension = "**/*.csv";
         let mut sub_file_path;
@@ -155,7 +164,7 @@ mod tests {
     #[test]
     fn regex_search_correct_count() {
         let experiment_dir = tempfile::TempDir::new().unwrap();
-        let dir_path = &experiment_dir.path(); 
+        let dir_path = &experiment_dir.path();
 
         let test_extension = "**/*.csv";
         let mut sub_file_path;
@@ -183,7 +192,7 @@ mod tests {
     #[test]
     fn return_unqiue_vals() {
         let experiment_dir = tempfile::TempDir::new().unwrap();
-        let dir_path = &experiment_dir.path(); 
+        let dir_path = &experiment_dir.path();
 
         let test_extension = "**/*.csv";
         let mut sub_dir_path;
@@ -194,7 +203,7 @@ mod tests {
         for j in 0..n_unique_expected {
             sub_dir_path = dir_path.join(format!("sub_dir_{}", j));
             fs::create_dir(&sub_dir_path) .expect("Unable to create dir");
-            
+
             // Create 4 csv files
             for i in 0..4 {
                 sub_file_path = sub_dir_path.join(format!("experiment{}.csv", i));
@@ -212,7 +221,7 @@ mod tests {
                                              &test_extension)
             .expect("No files matching '.csv' found");
 
-        let unique_dirs = get_unique_parent_dirs(actual_paths).unwrap();
+        let unique_dirs = get_unique_experiment_dirs(actual_paths).unwrap();
 
         assert_eq!(unique_dirs.len(), n_unique_expected)
 
@@ -222,9 +231,9 @@ mod tests {
     #[test]
     fn get_creation_time() {
         let experiment_dir = tempfile::TempDir::new().unwrap();
-        let dir_path = &experiment_dir.path(); 
+        let dir_path = &experiment_dir.path();
 
-        // Create the file 
+        // Create the file
         let file_path = dir_path.join("dated_file.txt");
         fs::File::create(&file_path).expect("Unable to create date test file.");
 
@@ -250,9 +259,9 @@ mod tests {
         let expected_formatted_time = "Thu Sep 19 22:16:28 2019";
 
         let experiment_dir = tempfile::TempDir::new().unwrap();
-        let dir_path = &experiment_dir.path(); 
+        let dir_path = &experiment_dir.path();
 
-        // Create the file 
+        // Create the file
         let file_path = dir_path.join("dated_file.txt");
         fs::File::create(&file_path).expect("Unable to create date test file.");
 
