@@ -7,7 +7,7 @@ extern crate chrono;
 
 use glob::glob;
 use std::path::{PathBuf,Path};
-use chrono::Utc;
+use chrono::Local;
 use chrono::Datelike;
 
 
@@ -63,8 +63,8 @@ fn get_unique_parent_dirs(file_list: Vec<PathBuf>) -> Option<Vec<PathBuf>> {
 /// Container for each experiment file, this should contain a list to a valid
 /// file and useful metadata of the file.
 pub struct ExperimentFile {
-    path: PathBuf,
-    modified: chrono::DateTime::<Utc>,
+    pub path: PathBuf,
+    pub modified: chrono::DateTime::<Local>,
 }
 
 impl ExperimentFile {
@@ -77,7 +77,7 @@ impl ExperimentFile {
         // Calculate the last modified time
         let metadata = path.metadata().expect("failed to get metadata");
         let modified_system = metadata.modified().expect("Unable to get file creation time");
-        let modified = chrono::DateTime::<Utc>::from(modified_system);
+        let modified = chrono::DateTime::<Local>::from(modified_system);
 
         ExperimentFile{ path: path, modified: modified}
     }

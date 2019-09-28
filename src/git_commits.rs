@@ -4,21 +4,21 @@
 /// unstable and we don't require most of the functionality and there doesn't
 /// seem to be a consistent way to get the last commit before a given date.
 
-use chrono::{Utc,FixedOffset};
+use chrono::{Local,FixedOffset};
 use std::process::Command;
 use std::str;
 use std::convert::TryInto;
 
 pub struct CommitInformation {
     pub hash: String,
-    pub date: chrono::DateTime::<Utc>,
+    pub date: chrono::DateTime::<Local>,
     pub subject: String,
     pub commits_after: i32,
 }
 
 impl CommitInformation {
     /// Get the last commit before a given date.
-    pub fn from(date: chrono::DateTime::<Utc>) -> CommitInformation {
+    pub fn from(date: chrono::DateTime::<Local>) -> CommitInformation {
         // Get the last commit, with an abbreviated hash, date of the commit and
         // the header of the subject line.
         let pretty_format_arg = format!("--pretty=format:{}", "%cI%n%s");
@@ -52,7 +52,7 @@ impl CommitInformation {
 
         CommitInformation{
             hash:git_parts[0].to_string(),
-            date:chrono::DateTime::<Utc>::from(commit_time),
+            date:chrono::DateTime::<Local>::from(commit_time),
             subject:git_parts[2].to_string(),
             commits_after:get_number_of_commits_behind(commit_time),
         }
@@ -207,7 +207,7 @@ mod tests {
     // Creating of a commit before a given date
     #[test]
     fn create_commit_information() {
-        let current = chrono::offset::Utc::now();
+        let current = chrono::offset::Local::now();
         let commit = CommitInformation::from(current);
         // assert!(false)
     }
