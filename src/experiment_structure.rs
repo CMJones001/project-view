@@ -1,27 +1,28 @@
-/// Grouping and organisation of the experiment files
-///
-/// # Outline
-///
-/// We expect a directory that holds all of the steps in the pipeline for a single
-/// experiment; for instance we may have: 1) data extracted from images; 2)
-/// filtering and aggregation of this data 3) plots created from the previous
-/// step. The output for each step of the analysis should be organised into
-/// sub-directories.
-///
-/// Each of these steps would correspond to a ExperimentPart, grouped together
-/// into a single Experiment.
-///
-/// Typically a new experiment directory may use different starting data or a
-/// different analysis step, for which a separate Experiment struct is created.
-///
-/// ## Experiment
-///
-/// Container for all of the steps in the pipeline for one experiment.
-/// Many of these may be created to allow
-///
-/// # Future work
-/// Later we expect to load these values from a configuration files but for now
-/// the values are hard coded.
+//! Grouping and organisation of the experiment files
+//!
+//! # Outline
+//!
+//! We expect a directory that holds all of the steps in the pipeline for a single
+//! experiment; for instance we may have: 1) data extracted from images; 2)
+//! filtering and aggregation of this data 3) plots created from the previous
+//! step. The output for each step of the analysis should be organised into
+//! sub-directories.
+//!
+//! Each of these steps would correspond to a ExperimentPart, grouped together
+//! into a single Experiment.
+//!
+//! Typically a new experiment directory may use different starting data or a
+//! different analysis step, for which a separate Experiment struct is created.
+//!
+//! ## Experiment
+//!
+//! Container for all of the steps in the pipeline for one experiment.
+//! Many of these may be created to allow for runs with different starting data
+//! or configuration values.
+//!
+//! # Future work
+//! Later we expect to load these values from a configuration files but for now
+//! the values are hard coded.
 
 use std::path::{PathBuf};
 use crate::file_status as fs;
