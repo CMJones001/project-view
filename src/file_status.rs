@@ -181,6 +181,7 @@ mod tests {
 
     // Formatting of a date into a human readable format
     #[test]
+    #[ignore]
     fn format_date() {
         let expected_formatted_time = "Thu Sep 19 22:16:28 2019";
 
