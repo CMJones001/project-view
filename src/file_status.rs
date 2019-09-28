@@ -6,9 +6,8 @@
 extern crate chrono;
 
 use glob::glob;
-use std::path::{PathBuf,Path};
+use std::path::PathBuf;
 use chrono::Local;
-use chrono::Datelike;
 
 
 /// Return a list of files matching a simple regex in a given directory,
@@ -101,21 +100,7 @@ mod tests {
     use filetime;
     use tempfile;
     use std::fs;
-    /// Return a path to a set of example data directories within the tests
-    /// directory.
-    fn get_mock_dir() -> PathBuf {
-        // Give relative to this source code file
-        let mut test_project_dirs = PathBuf::from(file!());
-
-        // Get the full path, remove up to project root and decend down into the
-        // tests dir.
-        test_project_dirs = test_project_dirs.canonicalize().unwrap();
-        test_project_dirs.pop();
-        test_project_dirs.pop();
-        test_project_dirs.push("tests/testDirs");
-
-        test_project_dirs
-    }
+    use chrono::{TimeZone,Datelike};
 
     /// Create a temporary directory to hold a mock experiment directory
     /// This is cleared after the tests are run
@@ -129,7 +114,7 @@ mod tests {
         let expected_path = dir_path.join("first_dir");
 
         // Try creating this directory
-        let sub_dir = fs::create_dir(dir_path.join("first_dir"))
+        let _sub_dir = fs::create_dir(dir_path.join("first_dir"))
             .expect("Unable to create sub directory in test dir");
 
         assert!(expected_path.exists());
@@ -208,7 +193,7 @@ mod tests {
 
         for j in 0..n_unique_expected {
             sub_dir_path = dir_path.join(format!("sub_dir_{}", j));
-            fs::create_dir(&sub_dir_path);
+            fs::create_dir(&sub_dir_path) .expect("Unable to create dir");
             
             // Create 4 csv files
             for i in 0..4 {
@@ -235,11 +220,23 @@ mod tests {
 
     // Test that we get the creation time of the file with ExperimentFile
     #[test]
-    #[ignore]
     fn get_creation_time() {
-        let test_file = get_mock_dir().join("first_dir/data.txt");
+        let experiment_dir = tempfile::TempDir::new().unwrap();
+        let dir_path = &experiment_dir.path(); 
 
-        let experiment_file = ExperimentFile::new(test_file);
+        // Create the file 
+        let file_path = dir_path.join("dated_file.txt");
+        fs::File::create(&file_path).expect("Unable to create date test file.");
+
+        // Set the modification time on the file
+        let creation_time = chrono::Local.ymd(2019, 9, 19).and_hms(10, 0, 0);
+        let creation_time_stamp = creation_time.timestamp();
+        filetime::set_file_mtime(&file_path,
+                          filetime::FileTime::from_unix_time(creation_time_stamp, 0))
+            .expect("Unable to set time stamp on file");
+
+        // Read the modification date of the file
+        let experiment_file = ExperimentFile::new(file_path);
         let modified_time = experiment_file.modified;
 
         assert_eq!(modified_time.year(), 2019);
@@ -249,12 +246,25 @@ mod tests {
 
     // Formatting of a date into a human readable format
     #[test]
-    #[ignore]
     fn format_date() {
         let expected_formatted_time = "Thu Sep 19 22:16:28 2019";
 
-        let test_file = get_mock_dir().join("first_dir/data.txt");
-        let experiment_file = ExperimentFile::new(test_file);
+        let experiment_dir = tempfile::TempDir::new().unwrap();
+        let dir_path = &experiment_dir.path(); 
+
+        // Create the file 
+        let file_path = dir_path.join("dated_file.txt");
+        fs::File::create(&file_path).expect("Unable to create date test file.");
+
+        // Set the modification time on the file
+        let creation_time = chrono::Local.ymd(2019, 9, 19).and_hms(22, 16, 28);
+        let creation_time_stamp = creation_time.timestamp();
+        filetime::set_file_mtime(&file_path,
+                                 filetime::FileTime::from_unix_time(creation_time_stamp, 0))
+            .expect("Unable to set time stamp on file");
+
+        // Read the modification date of the file
+        let experiment_file = ExperimentFile::new(file_path);
         let actual_formatted_time = experiment_file.formatted_time();
 
         assert_eq!(actual_formatted_time, expected_formatted_time)
