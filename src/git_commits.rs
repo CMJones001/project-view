@@ -201,13 +201,4 @@ mod tests {
 
         assert_eq!(split_expected, split_actual)
     }
-
-
-    // Creating of a commit before a given date
-    // #[test]
-    // fn create_commit_information() {
-    //     let current = chrono::offset::Local::now();
-    //     let commit = CommitInformation::from(current);
-    //     // assert!(false)
-    // }
 }
