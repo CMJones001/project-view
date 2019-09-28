@@ -14,19 +14,21 @@ use chrono::Datelike;
 /// Return a list of files matching a simple regex in a given directory,
 /// typically matching some sort of data file. We only return paths to actual
 /// files, directories are not included.
-pub fn list_files_in_dir(dir_path: PathBuf, glob_pattern: &String)
-                         -> Option<Vec<PathBuf>>{
+pub fn list_files_in_dir(dir_path: PathBuf, glob_pattern: &str)
+                         -> Option<Vec<ExperimentFile>>{
     let mut file_list = Vec::new();
     let mut possible_file;
 
-    // Load the paths into a vector
+    // Combine the directory and glob pattern into a pathlike string
     let regex_path = dir_path.join(glob_pattern);
 
     for entry in glob(regex_path.to_str()?).expect("Failed to read glob pattern") {
         // We must account for glob errors
         possible_file = entry.unwrap();
         // Only link to files, not dirs
-        if possible_file.is_file() {file_list.push(possible_file);}
+        if possible_file.is_file() {
+            file_list.push(ExperimentFile::new(possible_file));
+        }
     }
 
     let n_elements = file_list.len();
@@ -40,7 +42,8 @@ pub fn list_files_in_dir(dir_path: PathBuf, glob_pattern: &String)
 /// The experiment dirs are typically defined by the files they contain.
 /// Here we create a list of parent directories and then return only the unique
 /// values.
-fn get_unique_parent_dirs(file_list: Vec<PathBuf>) -> Option<Vec<PathBuf>> {
+pub fn get_unique_parent_dirs(file_list: Vec<ExperimentFile>) ->
+    Option<Vec<PathBuf>> {
     let mut parent_dirs = vec![];
     let mut parent_dir;
 
@@ -49,7 +52,7 @@ fn get_unique_parent_dirs(file_list: Vec<PathBuf>) -> Option<Vec<PathBuf>> {
 
     for file_ in file_list {
         // Get the first parent directory by removing the file name
-        parent_dir = PathBuf::from(file_.parent()?);
+        parent_dir = PathBuf::from(file_.path.parent()?);
 
         // Include only the unique vals
         if !parent_dirs.contains(&parent_dir) {
@@ -84,7 +87,7 @@ impl ExperimentFile {
 
     /// Return nicely formatted date time string
     pub fn formatted_time(&self) -> std::string::String {
-        let format_string = "%F";
+        let format_string = "%c";
         // std::string::ToString(self.modified.format(format_string))
         self.modified.format(format_string).to_string()
     }
@@ -130,7 +133,7 @@ mod tests {
             .expect("No files matched");
 
         for p in actual_paths {
-            assert_eq!("csv", p.extension().unwrap())
+            assert_eq!("csv", p.path.extension().unwrap())
         }
     }
 
@@ -179,7 +182,7 @@ mod tests {
     // Formatting of a date into a human readable format
     #[test]
     fn format_date() {
-        let expected_formatted_time = "2019-09-19";
+        let expected_formatted_time = "Thu Sep 19 22:16:28 2019";
 
         let test_file = get_mock_dir().join("first_dir/data.txt");
         let experiment_file = ExperimentFile::new(test_file);
