@@ -36,6 +36,7 @@ use crate::file_status as fs;
 pub struct ExperimentPart {
     name: String,
     pub file_list: Vec<fs::ExperimentFile>,
+    n_files: usize,
 }
 
 impl ExperimentPart {
@@ -44,21 +45,30 @@ impl ExperimentPart {
                    -> ExperimentPart {
 
         let mut file_list = fs::list_files_in_dir(dir, &glob_pattern)
-            .expect("No files found in experiment part.");
+            .unwrap_or_default();
+        let n_files = file_list.len();
 
         file_list.sort_by(|a, b| b.modified.cmp(&a.modified));
-        ExperimentPart { name, file_list}
+        ExperimentPart { name, file_list, n_files}
     }
 
     /// Print information about the number and age of files in the Part
     pub fn create_summary(&self) -> String {
+        // Exit early if no results found
+        if &self.n_files == &0 {
+            let summary = format!(
+                "No files found in {}.",
+                &self.name
+            );
+            return summary;
+        }
         // Spaces used to indent secondary lines
         let indent = "    ";
 
         let summary = format!(
             "{} contains {} file",
             &self.name,
-            &self.file_list.len(),
+            &self.n_files,
         );
 
         let newest_summary = format!(
@@ -68,7 +78,7 @@ impl ExperimentPart {
         );
 
         let mut oldest_summary = String::from("");
-        if &self.file_list.len() > &1 {
+        if &self.n_files > &1 {
             oldest_summary += &format!(
                 "\n{}Oldest file modified at {}",
                 indent,

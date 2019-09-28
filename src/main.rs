@@ -37,8 +37,19 @@ fn main() {
         glob_pattern
     );
 
+    dir_path = PathBuf::from("reason");
+    glob_pattern = "*.iz".to_string();
+    let missing_terms = experiment_structure::ExperimentPart::new(
+        "Empty dirs".to_string(),
+        dir_path,
+        glob_pattern,
+    );
+
+
+
     println!("{}\n", config_file.create_summary());
     println!("{}\n", fourier_terms.create_summary());
+    println!("{}\n",   missing_terms.create_summary());
     println!("{}",   fitting_terms.create_summary());
 
 }
