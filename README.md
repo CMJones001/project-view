@@ -2,13 +2,25 @@
 
 [![Build Status](https://travis-ci.org/CMJones001/project-view.svg?branch=develop)](https://travis-ci.org/CMJones001/project-view)
 
+# Installation
 
-## Outline
+Installing this program is as simple as installing rust,
+https://www.rust-lang.org/tools/install, and then running ``cargo build
+--release`` in this directory.
 
-This is a basic data pipeline created as a hobby project, partly to help
-organise our projects. As happens when developing academic software, we
-assume that we have we have a rapidly changing source code, and we wish
-to ensure not only that we have a reasonable data pipeline.
+## Quick start
+
+As this is in alpha development, the configuration values are hard coded for
+now, see ``src/main.rs`` for experiment parts that we are using. 
+
+Then run ``./target/relase/project_summary`` as usual.
+
+# Outline
+
+Academic software spends most of its lifetime in an active development
+cycle. We therefore introduce this tool to keep track of the users data in
+comparison to the stage of the source code, allowing us to see if any stages
+of analysis are out of date due to changes in format or method.
 
 Not only do we want to check whether data is present, but also if it was
 created before a breaking change was introduced that makes it unsuitable
@@ -16,15 +28,40 @@ for further analysis. This may be caused by a change in the data format,
 or an improved method where we do not wish to "contaminate" our new
 analysis.
 
+For now we simply report on the status of the data, but we wish to extend
+this to allow automatic running of the relevant scripts.
+
+## Data structure
+
+Our common dataflow boils down to a large set of initial data that requires
+multiple stages of analysis. The stages of this analysis are organised into
+sub-directories of a main experiment directory (not including the initial
+data).
+
+In some cases, there may be multiple experiment directories, this may
+correspond to different starting data or different approaches in analysis.
+
+## Reproducibilty
+
+For reproducibilty each of these Experiment directories should contain a
+configuration file that contains any of the metadata on the run, such as
+parameters or methods used in the analysis. Therefore, a user should be able
+to recreate the analysis using only the initial data and this configuration
+file.
+
+This program aims to automate this final step, not only for the initial
+author of the analysis during development but any later users of the
+software.
+
 ## Goals
 
-  - \[0/3\] Configuration file for the dataflow
-      - \[ \] Regex and location of data files
+  - \[1/3\] Configuration file for the dataflow
+      - \[X\] Regex and location of data files
       - \[ \] Linking the data files in order
       - \[ \] Tools needed at each step
-  - \[0/4\] Source code comparison How up to date is the data in
+  - \[1/4\] Source code comparison How up to date is the data in
     comparison to the source code?
-      - \[ \] Get the most recently updated file matching the regex in
+      - \[X\] Get the most recently updated file matching the regex in
         given directory
       - \[ \] Check for consistency in directory Are any of the files
         significantly out of date? We need to decide on a consistent
@@ -58,9 +95,7 @@ analysis.
             based around many tools.
           - Probably don't need to reinvent \`\`snake-make\`\` or
             similar.
-  - \[0/0\] Set up Travis
+  - \[X\] Set up Travis
       - This project is also a test of continuous integration, so we
         have proof that this is portable to other systems. This will be
         more important if we bring in GUI components.
-  - Language choice, I would like to try this in rust, to get more
-    practice, however this is not currently supported on the server.
