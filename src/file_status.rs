@@ -98,6 +98,9 @@ impl ExperimentFile {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use filetime;
+    use tempfile;
+    use std::fs;
     /// Return a path to a set of example data directories within the tests
     /// directory.
     fn get_mock_dir() -> PathBuf {
@@ -114,22 +117,48 @@ mod tests {
         test_project_dirs
     }
 
-    // Test that we get the correct mock directory by looking for a given folder.
+    /// Create a temporary directory to hold a mock experiment directory
+    /// This is cleared after the tests are run
     #[test]
     fn test_get_mock_dir() {
-        let test_dir = get_mock_dir();
-        let sub_dir = test_dir.join(Path::new("first_dir"));
+        // Create the directory and store the path
+        let experiment_dir = tempfile::TempDir::new().unwrap();
+        let dir_path = &experiment_dir.path(); 
 
-        assert!(sub_dir.exists());
+        // Where we expect a sub directory to be created
+        let expected_path = dir_path.join("first_dir");
+
+        // Try creating this directory
+        let sub_dir = fs::create_dir(dir_path.join("first_dir"))
+            .expect("Unable to create sub directory in test dir");
+
+        assert!(expected_path.exists());
     }
 
     // Tests that the file only returns the expected extension
     #[test]
     fn regex_search_correct_extension() {
-        let test_dir = get_mock_dir();
-        let test_extension = String::from("**/*.csv");
+        // Create the directory and store the path
+        let experiment_dir = tempfile::TempDir::new().unwrap();
+        let dir_path = &experiment_dir.path(); 
 
-        let actual_paths = list_files_in_dir(test_dir, &test_extension)
+        let test_extension = "**/*.csv";
+        let mut sub_file_path;
+
+        // Create 4 csv files
+        for i in 0..4 {
+            sub_file_path = dir_path.join(format!("experiment{}.csv", i));
+            fs::File::create(sub_file_path).unwrap();
+        }
+
+        // Create two txt files
+        for i in 0..2 {
+            sub_file_path = dir_path.join(format!("experiment{}.txt", i));
+            fs::File::create(sub_file_path).unwrap();
+        }
+
+        let actual_paths = list_files_in_dir(dir_path.to_path_buf(),
+                                             &test_extension)
             .expect("No files matched");
 
         for p in actual_paths {
@@ -140,29 +169,68 @@ mod tests {
     // Ensure that we match the expected number of files
     #[test]
     fn regex_search_correct_count() {
-        let test_dir = get_mock_dir();
-        let test_extension = String::from("**/*.csv");
+        let experiment_dir = tempfile::TempDir::new().unwrap();
+        let dir_path = &experiment_dir.path(); 
 
-        let actual_paths = list_files_in_dir(test_dir, &test_extension)
+        let test_extension = "**/*.csv";
+        let mut sub_file_path;
+
+        // Create 4 csv files
+        for i in 0..4 {
+            sub_file_path = dir_path.join(format!("experiment{}.csv", i));
+            fs::File::create(sub_file_path).unwrap();
+        }
+
+        // Create two txt files
+        for i in 0..2 {
+            sub_file_path = dir_path.join(format!("experiment{}.txt", i));
+            fs::File::create(sub_file_path).unwrap();
+        }
+
+        let actual_paths = list_files_in_dir(dir_path.to_path_buf(),
+                                             &test_extension)
             .expect("No files matched");
 
-        assert_eq!(3, actual_paths.len());
+        assert_eq!(4, actual_paths.len());
     }
 
     // Ensure that we return the expected number of non-empty directories
     #[test]
     fn return_unqiue_vals() {
-        let test_dir = get_mock_dir();
-        let data_file_regex = String::from("**/*");
+        let experiment_dir = tempfile::TempDir::new().unwrap();
+        let dir_path = &experiment_dir.path(); 
 
-        let data_files = list_files_in_dir(test_dir, &data_file_regex)
-            .expect("No files matched");
+        let test_extension = "**/*.csv";
+        let mut sub_dir_path;
+        let mut sub_file_path;
 
-        let actual_parent_dirs = get_unique_parent_dirs(data_files).unwrap();
-        for file_ in &actual_parent_dirs {
-            println!("{}", file_.display());
+        let n_unique_expected = 2;
+
+        for j in 0..n_unique_expected {
+            sub_dir_path = dir_path.join(format!("sub_dir_{}", j));
+            fs::create_dir(&sub_dir_path);
+            
+            // Create 4 csv files
+            for i in 0..4 {
+                sub_file_path = sub_dir_path.join(format!("experiment{}.csv", i));
+                fs::File::create(&sub_file_path).unwrap();
+            }
+
+            // Create two txt files
+            for i in 0..2 {
+                sub_file_path = sub_dir_path.join(format!("experiment{}.txt", i));
+                fs::File::create(&sub_file_path).unwrap();
+            };
         }
-        assert_eq!(3, actual_parent_dirs.len());
+
+        let actual_paths = list_files_in_dir(dir_path.to_path_buf(),
+                                             &test_extension)
+            .expect("No files matching '.csv' found");
+
+        let unique_dirs = get_unique_parent_dirs(actual_paths).unwrap();
+
+        assert_eq!(unique_dirs.len(), n_unique_expected)
+
     }
 
     // Test that we get the creation time of the file with ExperimentFile
