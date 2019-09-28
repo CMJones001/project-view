@@ -27,7 +27,7 @@ impl CommitInformation {
         let git_rev_call = Command::new("git")
             .arg("rev-list")
             .arg("-1")
-            .arg("--pretty=format:%cI%n%s")
+            .arg(pretty_format_arg)
             .arg(before_date_arg)
             .arg("--all")
             .arg("--abbrev-commit")
@@ -173,8 +173,7 @@ mod tests {
             .output()
             .expect("Failed to execute echo");
 
-        let output = capture_output_as_string(&echo_test).unwrap_stdout();
-
+        capture_output_as_string(&echo_test).unwrap_stdout();
     }
 
     // Test a shell command than only returns stderr should fail. The man
@@ -186,7 +185,7 @@ mod tests {
             .output()
             .expect("Failed to execute echo");
 
-        let output = capture_output_as_string(&echo_test)
+        capture_output_as_string(&echo_test)
             .expect_stdout("Custom message");
 
     }
@@ -201,14 +200,5 @@ mod tests {
         let split_actual = split_git_info_string(test_string);
 
         assert_eq!(split_expected, split_actual)
-    }
-
-
-    // Creating of a commit before a given date
-    #[test]
-    fn create_commit_information() {
-        let current = chrono::offset::Local::now();
-        let commit = CommitInformation::from(current);
-        // assert!(false)
     }
 }

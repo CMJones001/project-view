@@ -44,10 +44,15 @@ impl ExperimentPart {
     pub fn new(name: String, dir: PathBuf, glob_pattern: String)
                    -> ExperimentPart {
 
+        // Get all matching files, returning an empty list if this fails
+        // While it would be possible to keep this as an option, it makes it
+        // everything else more awkward.
         let mut file_list = fs::list_files_in_dir(dir, &glob_pattern)
             .unwrap_or_default();
         let n_files = file_list.len();
 
+        // Sort on the modification date
+        // Newest files are first
         file_list.sort_by(|a, b| b.modified.cmp(&a.modified));
         ExperimentPart { name, file_list, n_files}
     }
@@ -97,4 +102,122 @@ impl ExperimentPart {
         &self.file_list.last().unwrap()
     }
 
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use filetime;
+    use tempfile;
+    use std::fs;
+    use chrono::{TimeZone};
+
+    // Create a temporary file with a given name at a given day in Sep 2019.
+    fn create_file_at_hour(file_path: &PathBuf, day: u32) {
+        fs::File::create(&file_path).expect("Unable to create date test file.");
+
+        // Set the modification time on the file
+        let creation_time = chrono::Local.ymd(2019, 9, day).and_hms(12, 00, 00);
+        let creation_time_stamp = creation_time.timestamp();
+        filetime::set_file_mtime(&file_path,
+                                 filetime::FileTime::from_unix_time(creation_time_stamp, 0))
+            .expect("Unable to set time stamp on file");
+    }
+
+    // Generate an experiment part with a few sorted files
+    fn experiment_part_with_sorted_files(glob: &str) -> ExperimentPart {
+        let experiment_dir = tempfile::TempDir::new().unwrap();
+        let dir_path = &experiment_dir.path();
+
+        let test_days = vec![4, 2, 6, 3, 5, 3, 4];
+
+        // Create the relevant .txt files
+        for i in 0..4 {
+            let file_path = dir_path.join(format!("dated_file{}.txt", i));
+            create_file_at_hour(&file_path, test_days[i]);
+        }
+
+        // Create .csv files that should not be included.
+        // One of these is the newest file
+        for i in 4..6 {
+            let file_path = dir_path.join(format!("dated_file{}.csv", i));
+            create_file_at_hour(&file_path, test_days[i]);
+        }
+
+        // Create a single .cfg file, useful for single length files
+        let file_path = dir_path.join("dated_file.cfg");
+        create_file_at_hour(&file_path, 4);
+
+        ExperimentPart::new("Test".to_string(),
+                            PathBuf::from(dir_path),
+                            String::from(glob))
+    }
+
+    // Test that we get the correct files gathered by the file list creation
+    #[test]
+    fn test_file_list_creation() {
+        let exp_part_test = experiment_part_with_sorted_files("*.txt");
+
+        assert_eq!(exp_part_test.n_files, 4);
+        for file_ in exp_part_test.file_list {
+            assert_eq!(file_.path.extension().unwrap(), "txt");
+        }
+    }
+
+    // Test the sorting of the files
+    #[test]
+    fn test_newest_file() {
+        let exp_part_test = experiment_part_with_sorted_files("*.txt");
+        let newest_file = exp_part_test.get_newest_file();
+
+        let newest_file_name_expected = "dated_file2.txt";
+        let newest_file_name_actual = newest_file.path.file_name()
+            .unwrap();
+
+        assert_eq!(newest_file_name_actual, newest_file_name_expected)
+    }
+
+    // Test the sorting of the files
+    #[test]
+    fn test_oldest_file() {
+        let exp_part_test = experiment_part_with_sorted_files("*.txt");
+        let oldest_file = exp_part_test.get_oldest_file();
+
+        let oldest_file_name_expected = "dated_file1.txt";
+        let oldest_file_name_actual = oldest_file.path.file_name()
+            .unwrap();
+
+        assert_eq!(oldest_file_name_actual, oldest_file_name_expected)
+    }
+
+    // Test the summary when no files are found
+    #[test]
+    fn test_no_files_found_summary() {
+        let exp_part_empty = experiment_part_with_sorted_files("*.rs");
+
+        let summary_actual = exp_part_empty.create_summary();
+        let summary_expected = "No files found in Test.";
+
+        assert_eq!(summary_expected, summary_actual)
+    }
+
+    #[test]
+    fn test_single_summary() {
+        let exp_part_empty = experiment_part_with_sorted_files("*.cfg");
+
+        let summary_actual = exp_part_empty.create_summary();
+        let summary_expected = "Test contains 1 file";
+
+        assert!(summary_actual.starts_with(summary_expected));
+    }
+
+    #[test]
+    fn test_multiple_summary() {
+        let exp_part_empty = experiment_part_with_sorted_files("*.txt");
+
+        let summary_actual = exp_part_empty.create_summary();
+        let summary_expected = "Test contains 4 file";
+
+        assert!(summary_actual.starts_with(summary_expected));
+    }
 }
