@@ -8,7 +8,7 @@
 extern crate chrono;
 
 use glob::glob;
-use std::path::PathBuf;
+use std::path::{PathBuf,Path};
 use chrono::Local;
 
 
@@ -17,7 +17,7 @@ use chrono::Local;
 /// Each stage of the experiment analysis should be organised into the
 /// sub-directories of the main experiment directory. Therefore this function is
 /// useful to create a list of files for an experiment step.
-pub fn list_files_in_dir(dir_path: PathBuf, glob_pattern: &str)
+pub fn list_files_in_dir(dir_path: &Path, glob_pattern: &str)
                          -> Option<Vec<ExperimentFile>>{
     let mut file_list = Vec::new();
     let mut possible_file;
@@ -151,7 +151,7 @@ mod tests {
             fs::File::create(sub_file_path).unwrap();
         }
 
-        let actual_paths = list_files_in_dir(dir_path.to_path_buf(),
+        let actual_paths = list_files_in_dir(dir_path,
                                              &test_extension)
             .expect("No files matched");
 
@@ -181,7 +181,7 @@ mod tests {
             fs::File::create(sub_file_path).unwrap();
         }
 
-        let actual_paths = list_files_in_dir(dir_path.to_path_buf(),
+        let actual_paths = list_files_in_dir(dir_path,
                                              &test_extension)
             .expect("No files matched");
 
@@ -217,7 +217,7 @@ mod tests {
             };
         }
 
-        let actual_paths = list_files_in_dir(dir_path.to_path_buf(),
+        let actual_paths = list_files_in_dir(dir_path,
                                              &test_extension)
             .expect("No files matching '.csv' found");
 

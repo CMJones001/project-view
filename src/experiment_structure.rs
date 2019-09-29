@@ -24,7 +24,7 @@
 //! Later we expect to load these values from a configuration files but for now
 //! the values are hard coded.
 
-use std::path::{PathBuf};
+use std::path::Path;
 use crate::file_status as fs;
 
 /// This contains a single step on pipeline. This will likely contain a list of
@@ -41,12 +41,20 @@ pub struct ExperimentPart {
 }
 
 impl ExperimentPart {
-    /// Create the object by providing a subDir, glob and name
-    pub fn new(name: String, dir: PathBuf, glob_pattern: String)
+    // Wrapper for the function dealing with conversion from path-like types. We
+    // uses a wrapper to avoid compiling the entire function for each type used.
+    /// Create the object by providing a name, sub_dir and glob
+    pub fn new<P: AsRef<Path>>(name: String, dir: P, glob_pattern: String)
+                               -> ExperimentPart {
+        ExperimentPart::_new(name, dir.as_ref(), glob_pattern)
+    }
+
+    // Logic for creating the new ExperimentPart.
+    fn _new(name: String, dir: &Path, glob_pattern: String)
                    -> ExperimentPart {
 
         // Get all matching files, returning an empty list if this fails
-        // While it would be possible to keep this as an option, it makes it
+        // While it would be possible to keep this as an Option, it makes it
         // everything else more awkward.
         let mut file_list = fs::list_files_in_dir(dir, &glob_pattern)
             .unwrap_or_default();
@@ -114,13 +122,13 @@ mod tests {
     use chrono::{TimeZone};
 
     // Create a temporary file with a given name at a given day in Sep 2019.
-    fn create_file_at_hour(file_path: &PathBuf, day: u32) {
-        fs::File::create(&file_path).expect("Unable to create date test file.");
+    fn create_file_at_hour(file_path: &Path, day: u32) {
+        fs::File::create(file_path).expect("Unable to create date test file.");
 
         // Set the modification time on the file
         let creation_time = chrono::Local.ymd(2019, 9, day).and_hms(12, 00, 00);
         let creation_time_stamp = creation_time.timestamp();
-        filetime::set_file_mtime(&file_path,
+        filetime::set_file_mtime(file_path,
                                  filetime::FileTime::from_unix_time(creation_time_stamp, 0))
             .expect("Unable to set time stamp on file");
     }
@@ -150,7 +158,7 @@ mod tests {
         create_file_at_hour(&file_path, 4);
 
         ExperimentPart::new("Test".to_string(),
-                            PathBuf::from(dir_path),
+                            dir_path,
                             String::from(glob))
     }
 
