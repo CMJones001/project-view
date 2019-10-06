@@ -11,6 +11,7 @@ glob = "0.3"
 chrono = "0.4.9"
 log = "0.4.8"
 env_logger = "0.6.2"
+config = "0.9.3"
 
 # tui = "0.5"
 # termion = "1.5"

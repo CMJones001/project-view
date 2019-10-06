@@ -41,6 +41,7 @@ extern crate env_logger;
 mod experiment_structure;
 mod file_status;
 mod git_commits;
+mod settings;
 
 use crate::experiment_structure::ExperimentPart;
 

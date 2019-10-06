@@ -35,7 +35,7 @@ use crate::file_status as fs;
 /// are up to date and how this compares against the source code.
 ///
 pub struct ExperimentPart {
-    name: String,
+    pub name: String,
     pub file_list: Vec<fs::ExperimentFile>,
     n_files: usize,
 }
@@ -69,6 +69,8 @@ impl ExperimentPart {
     /// Print information about the number and age of files in the Part
     pub fn create_summary(&self) -> String {
         // Exit early if no results found
+        // TODO: Move this into a new function, along with the option for a
+        // single item.
         if &self.n_files == &0 {
             let summary = format!(
                 "No files found in {}.",

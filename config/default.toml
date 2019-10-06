@@ -1,0 +1,22 @@
+# Each experiment can be given as 'experiment-step.NAME'
+# The combined data from these will create a table
+[experiment-step.one]
+# Machine readable value, this is what the program will refer to
+id = "image_analysis"
+# Human reable label
+name = "Image Analysis"
+# Directory for the expected files
+out_dir = "fourier/"
+file_glob = "*.xz"
+
+[experiment-step.two]
+name = "Fitting"
+out_dir = "figs/FittingSmall"
+file_glob = "*.xz"
+# This data must be created first
+requires = ["image_analysis"]
+creation_script = []
+
+# Other configuration file
+[options]
+git-distance = "semantic"
